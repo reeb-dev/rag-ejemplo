@@ -103,3 +103,12 @@ a { color: var(--accent); }
 .apikey input { flex: 1; min-width: 200px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; }
 .apikey button { padding: 6px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; }
 .apikey button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+.benefits { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+.benefits ol { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; counter-reset: b; }
+.benefits li { counter-increment: b; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.benefits li strong::before { content: counter(b) ". "; color: var(--accent); }
+.benefits li span { color: var(--muted); }
+.benefits .more { color: var(--muted); font-size: 0.9rem; margin-top: 14px; }
+button.link { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--accent); font-size: 0.85rem; text-align: left; }
+button.link:hover { text-decoration: underline; }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createEngine, type Engine, type Mode, type Source } from "./engine";
 import { AnswerPanel } from "./components/AnswerPanel";
+import { Benefits } from "./components/Benefits";
 import { PipelineSteps, type Step } from "./components/PipelineSteps";
 import { SourceList } from "./components/SourceList";
 
@@ -68,7 +69,7 @@ export default function App() {
     }
   }
 
-  async function submit(q = question) {
+  async function submit(q = question, withComparison = compare) {
     const text = q.trim();
     if (!text) return;
     setQuestion(text);
@@ -79,7 +80,7 @@ export default function App() {
     setStep("retrieve");
     setNoRag(EMPTY);
     const jobs = [run("rag", text, setRag, controller.signal)];
-    if (compare) jobs.push(run("sin-rag", text, setNoRag, controller.signal));
+    if (withComparison) jobs.push(run("sin-rag", text, setNoRag, controller.signal));
     await Promise.all(jobs);
     if (!controller.signal.aborted) setStep("done");
   }
@@ -152,6 +153,14 @@ export default function App() {
       </main>
 
       <SourceList sources={rag.sources} loading={rag.loading && rag.sources.length === 0} />
+
+      <Benefits
+        onTry={(q) => {
+          setCompare(true);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          submit(q, true);
+        }}
+      />
 
       <footer className="footer">
         ¿Cómo funciona? Lee la{" "}
