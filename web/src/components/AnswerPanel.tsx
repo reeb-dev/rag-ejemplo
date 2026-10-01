@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { AnswerState } from "../App";
+import type { AnswerState } from "../Demo";
 
 interface Props {
   title: string;

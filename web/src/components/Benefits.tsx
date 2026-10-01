@@ -1,5 +1,3 @@
-const DOCS = "https://github.com/reeb-dev/rag-ejemplo/blob/main/docs";
-
 const BENEFITS: { title: string; text: string; tryIt?: string }[] = [
   {
     title: "Usa tus propios datos sin reentrenar",
@@ -61,14 +59,9 @@ export function Benefits({ onTry }: { onTry: (question: string) => void }) {
       </ol>
       <p className="more">
         Más detalle, comparación con fine-tuning y contexto largo, y casos de uso en{" "}
-        <a href={`${DOCS}/03-beneficios-y-ventajas.md`} target="_blank" rel="noreferrer">
-          Beneficios y ventajas de RAG
-        </a>
-        . Toda la guía, desde cero:{" "}
-        <a href={`${DOCS}/README.md`} target="_blank" rel="noreferrer">
-          documentación en español
-        </a>
-        .
+        <a href="#/guia/03-beneficios-y-ventajas">Beneficios y ventajas de RAG</a>. ¿Quieres usarlo con tus
+        documentos? Sigue la <a href="#/guia/06-guia-practica">guía práctica</a> y aprende a{" "}
+        <a href="#/guia/07-sacarle-el-jugo">sacarle el jugo</a>.
       </p>
     </section>
   );

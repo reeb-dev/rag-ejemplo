@@ -1,4 +1,4 @@
-# 6. Ejercicios para aprender (o enseñar) RAG
+# 8. Ejercicios para aprender (o enseñar) RAG
 
 Ejercicios prácticos sobre este repositorio, de menor a mayor dificultad. Sirven para un
 taller o una clase.
@@ -52,4 +52,4 @@ taller o una clase.
 
 ---
 
-← [5. Buenas prácticas](05-buenas-practicas-y-limitaciones.md) · Siguiente: [7. Glosario y recursos →](07-glosario-y-recursos.md)
+← [7. Sácale el jugo a RAG](07-sacarle-el-jugo.md) · Siguiente: [9. Glosario y recursos →](09-glosario-y-recursos.md)

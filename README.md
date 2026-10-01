@@ -4,7 +4,7 @@ Una aplicación pequeña y completa de **RAG** (*Retrieval-Augmented Generation*
 **documentación en español** para aprender y enseñar qué es, cómo funciona y por qué
 conviene usarlo.
 
-### 👉 [Probar la demo en vivo](https://reeb-dev.github.io/rag-ejemplo/) · [Leer la documentación](docs/README.md)
+### 👉 [Probar la demo en vivo](https://reeb-dev.github.io/rag-ejemplo/) · [Leer la guía en la web](https://reeb-dev.github.io/rag-ejemplo/#/guia)
 
 La demo en GitHub Pages funciona sin instalar nada: la búsqueda corre en tu navegador. Para
 que además redacte respuestas, pega tu propia clave de API de Anthropic (se guarda solo en
@@ -116,6 +116,9 @@ El corazón está en [`core/src/`](core/src), un archivo por paso:
 
 ## Documentación
 
+La guía completa también se puede leer en la web, con la demo al lado.
+
+
 | # | Capítulo |
 | --- | --- |
 | 1 | [¿Qué es RAG?](docs/01-que-es-rag.md) |
@@ -123,8 +126,10 @@ El corazón está en [`core/src/`](core/src), un archivo por paso:
 | 3 | [Beneficios y ventajas](docs/03-beneficios-y-ventajas.md) |
 | 4 | [Arquitectura del ejemplo](docs/04-arquitectura-del-ejemplo.md) |
 | 5 | [Buenas prácticas y limitaciones](docs/05-buenas-practicas-y-limitaciones.md) |
-| 6 | [Ejercicios para aprender o enseñar](docs/06-ejercicios.md) |
-| 7 | [Glosario y recursos](docs/07-glosario-y-recursos.md) |
+| 6 | [Guía práctica: arma tu propio RAG](docs/06-guia-practica.md) |
+| 7 | [Sácale el jugo a RAG](docs/07-sacarle-el-jugo.md) |
+| 8 | [Ejercicios para aprender o enseñar](docs/08-ejercicios.md) |
+| 9 | [Glosario y recursos](docs/09-glosario-y-recursos.md) |
 
 ## Licencia
 

@@ -65,4 +65,4 @@ que más impacto tiene, ordenada de "hazlo siempre" a "cuando lo necesites".
 
 ---
 
-← [4. Arquitectura del ejemplo](04-arquitectura-del-ejemplo.md) · Siguiente: [6. Ejercicios →](06-ejercicios.md)
+← [4. Arquitectura del ejemplo](04-arquitectura-del-ejemplo.md) · Siguiente: [6. Guía práctica: arma tu propio RAG →](06-guia-practica.md)

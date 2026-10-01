@@ -1,4 +1,4 @@
-# 7. Glosario y recursos
+# 9. Glosario y recursos
 
 ## Glosario
 
@@ -34,7 +34,7 @@
   el artículo original: <https://arxiv.org/abs/2005.11401>
 - Gao et al. (2023), *Retrieval-Augmented Generation for Large Language Models: A Survey*:
   <https://arxiv.org/abs/2312.10997>
-- Anthropic, *Introducing Contextual Retrieval* (cómo mejorar la recuperación):
+- Anthropic, *Introducing Contextual Retrieval* (contexto en cada fragmento, búsqueda híbrida y re-ranking):
   <https://www.anthropic.com/news/contextual-retrieval>
 
 ### Documentación de Claude
@@ -54,4 +54,4 @@
 
 ---
 
-← [6. Ejercicios](06-ejercicios.md) · [Volver al índice](README.md)
+← [8. Ejercicios](08-ejercicios.md) · [Volver al índice](README.md)
