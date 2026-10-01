@@ -1,4 +1,4 @@
-import type { Source } from "../api";
+import type { Source } from "../engine";
 
 /** Los fragmentos recuperados: lo que realmente "leyó" el modelo antes de responder. */
 export function SourceList({ sources, loading }: { sources: Source[]; loading: boolean }) {

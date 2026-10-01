@@ -1,7 +1,6 @@
 import { chunkDocuments, type ChunkOptions } from "./chunker.js";
 import { TfIdfEmbedder, type Embedder } from "./embeddings.js";
 import type { Generator } from "./generator.js";
-import { loadDocuments } from "./loader.js";
 import { buildRagUserMessage, NO_RAG_SYSTEM_PROMPT, RAG_SYSTEM_PROMPT } from "./prompt.js";
 import type { RetrievedChunk, SourceDocument } from "./types.js";
 import { InMemoryVectorStore } from "./vectorStore.js";
@@ -30,10 +29,6 @@ export class RagPipeline {
     this.store = new InMemoryVectorStore(embedder);
   }
 
-  async indexDirectory(dir: string, options?: ChunkOptions): Promise<void> {
-    this.indexDocuments(await loadDocuments(dir), options);
-  }
-
   indexDocuments(docs: SourceDocument[], options?: ChunkOptions): void {
     this.documents = docs;
     this.store.index(chunkDocuments(docs, options));
@@ -55,9 +50,9 @@ export class RagPipeline {
         type: "delta",
         text:
           mode === "rag"
-            ? "_Modo solo recuperación (no hay ANTHROPIC_API_KEY configurada)._ " +
+            ? "_Modo solo recuperación (no hay clave de API configurada)._ " +
               "Estos son los fragmentos que se enviarían a Claude como contexto; " +
-              "agrega una clave en `.env` para obtener una respuesta redactada."
+              "configura una clave de API para obtener una respuesta redactada."
             : "_Sin clave de API no se puede consultar al modelo sin RAG._",
       };
       yield { type: "done" };

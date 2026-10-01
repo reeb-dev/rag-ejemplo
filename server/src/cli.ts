@@ -2,9 +2,9 @@
  * Prueba el RAG desde la terminal, sin frontend:
  *   npm run query -w server -- "¿Cuánto dura la garantía de la batería?"
  */
-import { config } from "./config.js";
-import { ClaudeGenerator, hasClaudeCredentials } from "./rag/generator.js";
-import { RagPipeline } from "./rag/pipeline.js";
+import { config, hasClaudeCredentials } from "./config.js";
+import { ClaudeGenerator, RagPipeline } from "@rag/core";
+import { loadDocuments } from "./rag/loader.js";
 
 const question = process.argv.slice(2).join(" ").trim();
 if (!question) {
@@ -12,8 +12,8 @@ if (!question) {
   process.exit(1);
 }
 
-const rag = new RagPipeline(hasClaudeCredentials() ? new ClaudeGenerator() : null);
-await rag.indexDirectory(config.dataDir);
+const rag = new RagPipeline(hasClaudeCredentials() ? new ClaudeGenerator({ model: process.env.CLAUDE_MODEL }) : null);
+rag.indexDocuments(await loadDocuments(config.dataDir));
 
 for await (const ev of rag.answer(question)) {
   if (ev.type === "sources") {

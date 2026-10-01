@@ -4,6 +4,12 @@ Una aplicación pequeña y completa de **RAG** (*Retrieval-Augmented Generation*
 **documentación en español** para aprender y enseñar qué es, cómo funciona y por qué
 conviene usarlo.
 
+### 👉 [Probar la demo en vivo](https://reeb-dev.github.io/rag-ejemplo/) · [Leer la documentación](docs/README.md)
+
+La demo en GitHub Pages funciona sin instalar nada: la búsqueda corre en tu navegador. Para
+que además redacte respuestas, pega tu propia clave de API de Anthropic (se guarda solo en
+tu navegador).
+
 ![Captura de la app comparando una respuesta con RAG y sin RAG](docs/img/captura.png)
 
 <sub>Captura ilustrativa: las respuestas exactas del modelo varían.</sub>
@@ -45,7 +51,7 @@ La interfaz muestra:
 - un modo **"comparar sin RAG"** para ver lado a lado cómo responde el modelo sin contexto;
 - un control **top-k** para cambiar cuántos fragmentos se recuperan.
 
-## Cómo ejecutarlo
+## Cómo ejecutarlo en tu computadora
 
 Requisitos: **Node.js 20 o superior**.
 
@@ -71,19 +77,37 @@ Otros comandos:
 | `npm test` | Tests del pipeline (fragmentado, búsqueda, prompt). |
 | `npm run build && npm start` | Compila todo y sirve la app completa en <http://localhost:3001>. |
 | `npm run query -w server -- "¿Abren los domingos?"` | Prueba el RAG desde la terminal. |
+| `npm run build:pages` | Compila la versión estática (sin backend) que se publica en GitHub Pages. |
+
+## Dos formas de ejecutar el mismo RAG
+
+| | Con servidor (`npm run dev`) | Estática (GitHub Pages) |
+| --- | --- | --- |
+| Dónde se busca | En el backend de Node | En el navegador |
+| Clave de API | En el servidor (`.env`), nadie la ve | La que pega cada visitante, guardada en su navegador |
+| Documentos | Se leen de `data/` al arrancar | Se empaquetan en la web al compilar |
+| Para qué sirve | Así se hace en producción | Demo pública y gratis, sin servidor |
+
+El código de RAG es el mismo en los dos casos: vive en [`core/`](core/src) y lo usan
+tanto el servidor como la web. En producción la clave debe quedarse siempre en un servidor;
+el modo estático es solo para demos donde cada persona usa su propia clave.
+
+Cada `push` a `main` vuelve a publicar la web con
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml).
 
 ## Estructura
 
 ```
+core/      El RAG en sí (TypeScript sin dependencias de Node): lo usan el servidor y la web.
 data/      Base de conocimiento de ejemplo (Markdown). Cámbiala por tus documentos.
 docs/      Documentación sobre RAG, en español.
-server/    Backend Node + Express + TypeScript: indexado, búsqueda y llamada a Claude.
+server/    Backend Node + Express + TypeScript: API, lectura de archivos y CLI.
 web/       Frontend React + Vite + TypeScript.
 ```
 
-El corazón está en [`server/src/rag/`](server/src/rag), un archivo por paso:
-`loader` → `chunker` → `embeddings` → `vectorStore` → `prompt` → `generator`, unidos en
-[`pipeline.ts`](server/src/rag/pipeline.ts). Cada archivo está comentado en español.
+El corazón está en [`core/src/`](core/src), un archivo por paso:
+`documents` → `chunker` → `embeddings` → `vectorStore` → `prompt` → `generator`, unidos en
+[`pipeline.ts`](core/src/pipeline.ts). Cada archivo está comentado en español.
 
 > **Nota didáctica:** para que funcione sin servicios externos, la búsqueda usa **TF-IDF**
 > en memoria en lugar de un modelo de embeddings y una base vectorial. El concepto es el

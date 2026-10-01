@@ -6,12 +6,11 @@
     "dev": "tsx watch --env-file-if-exists=../.env src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file-if-exists=../.env dist/index.js",
-    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "query": "tsx --env-file-if-exists=../.env src/cli.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.131.0",
+    "@rag/core": "*",
     "cors": "^2.8.5",
     "express": "^5.2.1"
   },
@@ -20,7 +19,6 @@
     "@types/express": "^5.0.6",
     "@types/node": "^22.20.4",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3",
-    "vitest": "^5.0.3"
+    "typescript": "^5.9.3"
   }
 }

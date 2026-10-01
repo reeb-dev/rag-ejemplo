@@ -29,7 +29,7 @@ flowchart LR
 Se leen las fuentes: archivos Markdown, PDFs, páginas web, filas de una base de datos,
 tickets de soporte... En este ejemplo son los `.md` de la carpeta [`data/`](../data).
 
-> Código: [`server/src/rag/loader.ts`](../server/src/rag/loader.ts)
+> Código: [`core/src/documents.ts`](../core/src/documents.ts) y [`server/src/rag/loader.ts`](../server/src/rag/loader.ts)
 
 ### 1.2 Dividir en fragmentos (*chunking*)
 
@@ -54,7 +54,7 @@ Este ejemplo corta **por títulos de Markdown** y, si una sección es muy larga,
 párrafos con un pequeño **solapamiento**. Cada fragmento guarda la ruta de títulos
 (`Política de garantía › Cobertura`), lo que ayuda mucho a la búsqueda.
 
-> Código: [`server/src/rag/chunker.ts`](../server/src/rag/chunker.ts)
+> Código: [`core/src/chunker.ts`](../core/src/chunker.ts)
 
 ### 1.3 Calcular *embeddings*
 
@@ -74,7 +74,7 @@ dimensión del vector es una palabra, con más peso cuanto más rara es en el co
 menos "inteligente" (no sabe que *devolver* y *reembolso* son sinónimos) pero se entiende
 en 100 líneas de código. Ver [cómo cambiarlo por embeddings reales](04-arquitectura-del-ejemplo.md#cambiar-a-embeddings-reales).
 
-> Código: [`server/src/rag/embeddings.ts`](../server/src/rag/embeddings.ts)
+> Código: [`core/src/embeddings.ts`](../core/src/embeddings.ts)
 
 ### 1.4 Guardar en una base vectorial
 
@@ -83,7 +83,7 @@ Los vectores se guardan junto al texto del fragmento. Las bases de datos vectori
 "¿cuáles son los vectores más cercanos a este?" entre millones de entradas. Para un ejemplo
 con decenas de fragmentos alcanza con un array en memoria.
 
-> Código: [`server/src/rag/vectorStore.ts`](../server/src/rag/vectorStore.ts)
+> Código: [`core/src/vectorStore.ts`](../core/src/vectorStore.ts)
 
 ## Fase 2: consulta
 
@@ -121,7 +121,7 @@ Se arma el prompt. Un buen prompt de RAG tiene:
 Pregunta: ¿Cuánto dura la garantía de la batería de la E1?
 ```
 
-> Código: [`server/src/rag/prompt.ts`](../server/src/rag/prompt.ts)
+> Código: [`core/src/prompt.ts`](../core/src/prompt.ts)
 
 ### 2.3 Generar (G)
 
@@ -129,13 +129,13 @@ El LLM lee el contexto y redacta la respuesta. Como tiene el texto delante, no n
 "recordar": solo leer, seleccionar y redactar, que es justo lo que mejor hace. El ejemplo
 usa Claude con *streaming* para que la respuesta aparezca palabra a palabra.
 
-> Código: [`server/src/rag/generator.ts`](../server/src/rag/generator.ts)
+> Código: [`core/src/generator.ts`](../core/src/generator.ts)
 
 ## Todo junto
 
 La clase `RagPipeline` une las piezas y es el mejor punto de partida para leer el código:
 
-> Código: [`server/src/rag/pipeline.ts`](../server/src/rag/pipeline.ts)
+> Código: [`core/src/pipeline.ts`](../core/src/pipeline.ts)
 
 ---
 

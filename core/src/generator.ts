@@ -18,10 +18,28 @@ export interface Generator {
 // Modelos que aceptan el modo de respaldo del servidor `fallbacks: "default"`.
 const FALLBACK_MODELS = new Set(["claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5"]);
 
-export class ClaudeGenerator implements Generator {
-  private readonly client = new Anthropic();
+export const DEFAULT_MODEL = "claude-opus-5-5";
 
-  constructor(readonly model: string = process.env.CLAUDE_MODEL || "claude-opus-5-5") {}
+export interface ClaudeGeneratorOptions {
+  /** Si se omite, el SDK la toma de ANTHROPIC_API_KEY (solo en Node). */
+  apiKey?: string;
+  model?: string;
+  /**
+   * Permite llamar a la API directamente desde el navegador (lo usa la demo de
+   * GitHub Pages). La clave queda expuesta a quien use ese navegador, así que
+   * solo es aceptable cuando cada persona usa SU propia clave.
+   */
+  browser?: boolean;
+}
+
+export class ClaudeGenerator implements Generator {
+  private readonly client: Anthropic;
+  readonly model: string;
+
+  constructor({ apiKey, model, browser }: ClaudeGeneratorOptions = {}) {
+    this.model = model || DEFAULT_MODEL;
+    this.client = new Anthropic({ apiKey, dangerouslyAllowBrowser: browser });
+  }
 
   async *generate({ system, userMessage }: GenerateParams): AsyncGenerator<string> {
     const useFallback = FALLBACK_MODELS.has(this.model);
@@ -49,9 +67,4 @@ export class ClaudeGenerator implements Generator {
       yield "\n\n_(Respuesta cortada por longitud.)_";
     }
   }
-}
-
-/** ¿Hay credenciales para llamar a Claude? Sin ellas la app funciona en modo solo recuperación. */
-export function hasClaudeCredentials(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }

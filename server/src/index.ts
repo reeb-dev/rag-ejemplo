@@ -1,13 +1,13 @@
 import cors from "cors";
 import express from "express";
 import path from "node:path";
-import { config } from "./config.js";
-import { ClaudeGenerator, hasClaudeCredentials } from "./rag/generator.js";
-import { RagPipeline, type AnswerMode } from "./rag/pipeline.js";
+import { config, hasClaudeCredentials } from "./config.js";
+import { ClaudeGenerator, RagPipeline, type AnswerMode } from "@rag/core";
+import { loadDocuments } from "./rag/loader.js";
 
-const generator = hasClaudeCredentials() ? new ClaudeGenerator() : null;
+const generator = hasClaudeCredentials() ? new ClaudeGenerator({ model: process.env.CLAUDE_MODEL }) : null;
 const rag = new RagPipeline(generator);
-await rag.indexDirectory(config.dataDir);
+rag.indexDocuments(await loadDocuments(config.dataDir));
 
 const app = express();
 app.use(cors());

@@ -24,7 +24,7 @@ taller o una clase.
    y haz preguntas sobre ellas.
 7. **Usa tus propios documentos.** Reemplaza `data/` por el reglamento de tu facultad, el
    manual de tu empresa o la documentación de un proyecto, y adapta `RAG_SYSTEM_PROMPT` en
-   `server/src/rag/prompt.ts`.
+   `core/src/prompt.ts`.
 
 ## Nivel 3: modificar el código
 
@@ -34,7 +34,7 @@ taller o una clase.
 9. **Sinónimos.** Pregunta "¿me reintegran la plata si no me gusta?". TF-IDF no sabe que
    *reintegrar* ≈ *reembolso* ≈ *devolución*. ¿Qué fragmentos trae? (Pista: mira
    `POST /api/search`.) Esta es la principal razón para usar embeddings reales.
-10. **Un test nuevo.** Agrega un caso a `server/test/rag.test.ts` y ejecuta `npm test`.
+10. **Un test nuevo.** Agrega un caso a `core/test/rag.test.ts` y ejecuta `npm test`.
 
 ## Nivel 4: proyectos
 

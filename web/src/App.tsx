@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ask, getHealth, type Health, type Mode, type Source } from "./api";
+import { createEngine, type Engine, type Mode, type Source } from "./engine";
 import { AnswerPanel } from "./components/AnswerPanel";
 import { PipelineSteps, type Step } from "./components/PipelineSteps";
 import { SourceList } from "./components/SourceList";
@@ -23,8 +23,8 @@ export interface AnswerState {
 const EMPTY: AnswerState = { text: "", sources: [], loading: false, error: null };
 
 export default function App() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [healthError, setHealthError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState(loadKey);
+  const [engine, setEngine] = useState<Engine | null>(null);
   const [question, setQuestion] = useState("");
   const [topK, setTopK] = useState(4);
   const [compare, setCompare] = useState(false);
@@ -34,13 +34,18 @@ export default function App() {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    getHealth().then(setHealth, (e: Error) => setHealthError(e.message));
-  }, []);
+    let cancelled = false;
+    createEngine(apiKey).then((e) => !cancelled && setEngine(e));
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey]);
 
   async function run(mode: Mode, q: string, set: (fn: (s: AnswerState) => AnswerState) => void, signal: AbortSignal) {
     set(() => ({ ...EMPTY, loading: true }));
     try {
-      await ask(
+      if (!engine) throw new Error("La app todavía se está cargando.");
+      await engine.ask(
         q,
         mode,
         topK,
@@ -89,8 +94,10 @@ export default function App() {
             modelo conoce. Todo lo que sepa lo saca de sus documentos.
           </p>
         </div>
-        <StatusBadge health={health} error={healthError} />
+        <StatusBadge engine={engine} />
       </header>
+
+      {engine?.kind === "browser" && <ApiKeyBox apiKey={apiKey} onChange={setApiKey} />}
 
       <PipelineSteps step={step} />
 
@@ -157,17 +164,87 @@ export default function App() {
   );
 }
 
-function StatusBadge({ health, error }: { health: Health | null; error: string | null }) {
-  if (error) return <div className="status error">Backend sin conexión</div>;
-  if (!health) return <div className="status">Conectando…</div>;
+function StatusBadge({ engine }: { engine: Engine | null }) {
+  if (!engine) return <div className="status">Cargando…</div>;
+  const { info } = engine;
   return (
     <div className="status">
       <span>
-        {health.documents.length} documentos · {health.chunks} fragmentos
+        {info.documents.length} documentos · {info.chunks} fragmentos
       </span>
-      <span className={health.model ? "ok" : "warn"}>
-        {health.model ? `Modelo: ${health.model}` : "Solo recuperación (sin API key)"}
+      <span>{engine.kind === "server" ? "RAG en el servidor (Node)" : "RAG en tu navegador"}</span>
+      <span className={info.model ? "ok" : "warn"}>
+        {info.model ? `Modelo: ${info.model}` : "Solo recuperación (sin clave de API)"}
       </span>
     </div>
+  );
+}
+
+const KEY_STORAGE = "rag-ejemplo:anthropic-key";
+
+function loadKey(): string {
+  try {
+    return localStorage.getItem(KEY_STORAGE) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * En la versión estática (GitHub Pages) no hay servidor que guarde la clave:
+ * cada visitante puede usar la suya. Se guarda solo en este navegador.
+ */
+function ApiKeyBox({ apiKey, onChange }: { apiKey: string; onChange: (key: string) => void }) {
+  const [draft, setDraft] = useState(apiKey);
+  const save = (value: string) => {
+    try {
+      if (value) localStorage.setItem(KEY_STORAGE, value);
+      else localStorage.removeItem(KEY_STORAGE);
+    } catch {
+      // Sin almacenamiento disponible: la clave dura solo esta sesión.
+    }
+    onChange(value);
+  };
+  return (
+    <details className="apikey" open={!apiKey}>
+      <summary>{apiKey ? "Clave de API configurada ✓" : "Opcional: usa tu clave de API de Anthropic para generar respuestas"}</summary>
+      <p>
+        Sin clave la demo funciona en <strong>modo solo recuperación</strong>: verás qué fragmentos se enviarían al
+        modelo. Con tu clave, tu navegador llama directamente a la API de Claude. La clave se guarda solo en este
+        navegador y no pasa por ningún otro servidor. Consíguela en{" "}
+        <a href="https://console.anthropic.com/" target="_blank" rel="noreferrer">
+          console.anthropic.com
+        </a>
+        .
+      </p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save(draft.trim());
+        }}
+      >
+        <input
+          type="password"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="sk-ant-..."
+          aria-label="Clave de API de Anthropic"
+          autoComplete="off"
+        />
+        <button type="submit">Guardar</button>
+        {apiKey && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => {
+              setDraft("");
+              save("");
+            }}
+          >
+            Borrar
+          </button>
+        )}
+      </form>
+    </details>
   );
 }

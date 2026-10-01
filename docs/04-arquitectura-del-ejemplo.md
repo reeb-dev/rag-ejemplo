@@ -2,40 +2,54 @@
 
 ## Vista general
 
+El mismo código de RAG (`core/`) se puede ejecutar en dos lugares:
+
 ```mermaid
-flowchart LR
-  U[Navegador<br/>React + TypeScript] -- "POST /api/ask<br/>(Server-Sent Events)" --> S[Servidor<br/>Node + Express + TypeScript]
-  S --> P[RagPipeline]
-  P --> VS[(InMemoryVectorStore<br/>TF-IDF)]
-  P --> G[ClaudeGenerator]
-  G -- streaming --> A[API de Claude]
-  DATA[data/*.md] -- al arrancar --> P
+flowchart TB
+  subgraph Local["Con servidor: npm run dev"]
+    U1[Navegador<br/>React] -- "POST /api/ask (SSE)" --> S[Node + Express]
+    S --> C1[core: RagPipeline]
+    C1 -- "clave en .env" --> A1[API de Claude]
+    D1[data/*.md] -- "fs, al arrancar" --> C1
+  end
+  subgraph Pages["Estático: GitHub Pages"]
+    U2[Navegador<br/>React + core: RagPipeline] -- "clave del visitante" --> A2[API de Claude]
+    D2[data/*.md] -- "empaquetados al compilar" --> U2
+  end
 ```
+
+La web decide sola: si encuentra el backend (`/api/health`), lo usa; si no (en GitHub
+Pages), carga el RAG en el navegador. Ver [`web/src/engine.ts`](../web/src/engine.ts).
 
 ```
 rag-ejemplo/
+├── core/                  ← el RAG, sin dependencias de Node (servidor y navegador)
+│   ├── src/
+│   │   ├── documents.ts   ← 1. archivo → documento
+│   │   ├── chunker.ts     ← 2. dividir en fragmentos
+│   │   ├── embeddings.ts  ← 3. texto → vectores (TF-IDF)
+│   │   ├── vectorStore.ts ← 4. guardar y buscar vectores
+│   │   ├── prompt.ts      ← A: armar el prompt con contexto
+│   │   ├── generator.ts   ← G: llamar a Claude en streaming
+│   │   ├── pipeline.ts    ← une todo
+│   │   └── types.ts
+│   └── test/rag.test.ts   ← tests con Vitest
 ├── data/                  ← la base de conocimiento (Markdown)
 ├── docs/                  ← esta documentación
-├── server/                ← backend Node + TypeScript
-│   ├── src/
-│   │   ├── index.ts       ← servidor Express y endpoints
-│   │   ├── cli.ts         ← probar el RAG desde la terminal
-│   │   ├── config.ts
-│   │   └── rag/
-│   │       ├── loader.ts      ← 1. cargar documentos
-│   │       ├── chunker.ts     ← 2. dividir en fragmentos
-│   │       ├── embeddings.ts  ← 3. texto → vectores (TF-IDF)
-│   │       ├── vectorStore.ts ← 4. guardar y buscar vectores
-│   │       ├── prompt.ts      ← A: armar el prompt con contexto
-│   │       ├── generator.ts   ← G: llamar a Claude en streaming
-│   │       ├── pipeline.ts    ← une todo
-│   │       └── types.ts
-│   └── test/rag.test.ts   ← tests con Vitest
-└── web/                   ← frontend React + Vite + TypeScript
-    └── src/
-        ├── App.tsx
-        ├── api.ts             ← cliente de /api/ask (lee el streaming)
-        └── components/        ← pasos, respuesta, fragmentos
+├── server/                ← backend Node + Express + TypeScript
+│   └── src/
+│       ├── index.ts       ← servidor Express y endpoints
+│       ├── cli.ts         ← probar el RAG desde la terminal
+│       ├── config.ts
+│       └── rag/loader.ts  ← leer data/ del disco
+├── web/                   ← frontend React + Vite + TypeScript
+│   └── src/
+│       ├── App.tsx
+│       ├── engine.ts      ← RAG en el servidor o en el navegador
+│       └── components/    ← pasos, respuesta, fragmentos
+└── .github/workflows/
+    ├── ci.yml             ← tests y build en cada push
+    └── pages.yml          ← publica la web en GitHub Pages
 ```
 
 ## Endpoints del backend
@@ -68,7 +82,7 @@ respuesta a medida que Claude lo genera.
 
 ## El generador (Claude)
 
-[`generator.ts`](../server/src/rag/generator.ts) usa el SDK oficial `@anthropic-ai/sdk`:
+[`generator.ts`](../core/src/generator.ts) usa el SDK oficial `@anthropic-ai/sdk`:
 
 - **Modelo:** `claude-opus-5-5` por defecto; se cambia con `CLAUDE_MODEL` en `.env`.
 - **Streaming:** `client.beta.messages.stream(...)` y se reenvía cada `text_delta`.
@@ -77,9 +91,24 @@ respuesta a medida que Claude lo genera.
 - **Respaldo del servidor** (`fallbacks: "default"`): si el modelo declina una petición,
   la API la reintenta con otro modelo automáticamente.
 
-Sin `ANTHROPIC_API_KEY`, la app funciona en **modo solo recuperación**: muestra los
-fragmentos que se enviarían al modelo. Así se puede estudiar la parte de búsqueda sin
-ninguna cuenta.
+Sin clave, la app funciona en **modo solo recuperación**: muestra los fragmentos que se
+enviarían al modelo. Así se puede estudiar la parte de búsqueda sin ninguna cuenta.
+
+### La clave de API en la versión estática
+
+En GitHub Pages no hay servidor, así que el navegador llama directamente a la API de
+Claude (`dangerouslyAllowBrowser: true` en el SDK) con la clave que pega cada visitante,
+guardada en su `localStorage`. Esto está bien para una demo donde **cada persona usa su
+propia clave**, pero nunca para una app pública con **tu** clave: cualquiera podría leerla
+desde el navegador. En producción, la llamada a Claude va siempre en un servidor, como en
+el modo `npm run dev`.
+
+## GitHub Pages
+
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) se ejecuta en cada push a
+`main`: corre los tests, compila la web con `npm run build:pages` (que activa el modo
+estático y ajusta la ruta base a `/<nombre-del-repo>/`) y la publica. Para usarlo en tu
+propio fork: *Settings → Pages → Source: GitHub Actions*.
 
 ## Cambiar a embeddings reales
 

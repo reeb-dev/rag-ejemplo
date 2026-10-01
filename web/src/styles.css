@@ -95,3 +95,11 @@ a { color: var(--accent); }
   .answers.two { grid-template-columns: 1fr; }
   .status { text-align: left; }
 }
+
+.apikey { margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; }
+.apikey summary { cursor: pointer; font-weight: 600; }
+.apikey p { color: var(--muted); margin: 8px 0; }
+.apikey form { display: flex; gap: 8px; flex-wrap: wrap; }
+.apikey input { flex: 1; min-width: 200px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; }
+.apikey button { padding: 6px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; }
+.apikey button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }

@@ -43,7 +43,7 @@ que más impacto tiene, ordenada de "hazlo siempre" a "cuando lo necesites".
 
 ### Evaluación (lo que más se olvida)
 - Arma un **conjunto de preguntas de prueba** con la respuesta esperada y el documento
-  correcto (como los tests en [`server/test/rag.test.ts`](../server/test/rag.test.ts)).
+  correcto (como los tests en [`core/test/rag.test.ts`](../core/test/rag.test.ts)).
 - **Mide por separado** las dos mitades:
   - *Recuperación:* ¿el fragmento correcto está entre los top-k? (*recall@k*, MRR)
   - *Generación:* ¿la respuesta es fiel al contexto, correcta y completa?

@@ -1,12 +1,18 @@
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { chunkDocument } from "../src/rag/chunker.js";
-import { cosineSimilarity, TfIdfEmbedder, tokenize } from "../src/rag/embeddings.js";
-import type { GenerateParams, Generator } from "../src/rag/generator.js";
-import { RagPipeline, type AnswerEvent } from "../src/rag/pipeline.js";
+import { chunkDocument } from "../src/chunker.js";
+import { cosineSimilarity, TfIdfEmbedder, tokenize } from "../src/embeddings.js";
+import type { GenerateParams, Generator } from "../src/generator.js";
+import { isKnowledgeFile, parseDocument } from "../src/documents.js";
+import { RagPipeline, type AnswerEvent } from "../src/pipeline.js";
 
 const dataDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../data");
+const docs = readdirSync(dataDir)
+  .filter(isKnowledgeFile)
+  .sort()
+  .map((f) => parseDocument(f, readFileSync(path.join(dataDir, f), "utf8")));
 
 describe("chunker", () => {
   it("corta por secciones y guarda la ruta de títulos", () => {
@@ -25,6 +31,15 @@ describe("chunker", () => {
     const chunks = chunkDocument({ id: "l.md", title: "Largo", text }, { maxChars: 500, overlap: 50 });
     expect(chunks.length).toBeGreaterThan(1);
     for (const c of chunks) expect(c.text.length).toBeLessThanOrEqual(500 + 50 + 2);
+  });
+});
+
+describe("documentos", () => {
+  it("usa el primer título como nombre y descarta los README", () => {
+    expect(parseDocument("a.md", "texto\n# Hola mundo\nmás").title).toBe("Hola mundo");
+    expect(parseDocument("notas.txt", "sin título").title).toBe("notas");
+    expect(isKnowledgeFile("README.md")).toBe(false);
+    expect(isKnowledgeFile("01-empresa.md")).toBe(true);
   });
 });
 
@@ -55,7 +70,7 @@ describe("pipeline sobre los documentos de ejemplo", () => {
 
   it.each(cases)("'%s' recupera primero %s", async (question, expectedDoc) => {
     const rag = new RagPipeline(null);
-    await rag.indexDirectory(dataDir);
+    rag.indexDocuments(docs);
     expect(rag.retrieve(question, 3)[0].docId).toBe(expectedDoc);
   });
 
@@ -69,7 +84,7 @@ describe("pipeline sobre los documentos de ejemplo", () => {
       },
     };
     const rag = new RagPipeline(fake);
-    await rag.indexDirectory(dataDir);
+    rag.indexDocuments(docs);
 
     const events: AnswerEvent[] = [];
     for await (const ev of rag.answer("¿Hay envío gratis?")) events.push(ev);
@@ -90,7 +105,7 @@ describe("pipeline sobre los documentos de ejemplo", () => {
       },
     };
     const rag = new RagPipeline(fake);
-    await rag.indexDirectory(dataDir);
+    rag.indexDocuments(docs);
     for await (const _ of rag.answer("¿Hay envío gratis?", "sin-rag"));
     expect(calls[0].userMessage).toBe("¿Hay envío gratis?");
   });

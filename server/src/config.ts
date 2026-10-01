@@ -13,3 +13,8 @@ export const config = {
     return existsSync(path.join(this.webDist, "index.html"));
   },
 };
+
+/** ¿Hay credenciales para llamar a Claude? Sin ellas el servidor funciona en modo solo recuperación. */
+export function hasClaudeCredentials(): boolean {
+  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+}
