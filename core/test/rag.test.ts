@@ -110,3 +110,31 @@ describe("pipeline sobre los documentos de ejemplo", () => {
     expect(calls[0].userMessage).toBe("¿Hay envío gratis?");
   });
 });
+
+describe("respuesta extractiva (sin modelo)", () => {
+  const answerFor = async (question: string) => {
+    const rag = new RagPipeline(null);
+    rag.indexDocuments(docs);
+    let text = "";
+    for await (const ev of rag.answer(question)) if (ev.type === "delta") text += ev.text;
+    return text;
+  };
+
+  it("copia la frase que responde, con su cita", async () => {
+    expect(await answerFor("¿Puedo pagar en cuotas?")).toMatch(/12 cuotas sin interés.*\[\d\]/);
+  });
+
+  it("dice que no encontró nada si la pregunta habla de algo que no está", async () => {
+    expect(await answerFor("¿Venden monopatines eléctricos?")).toMatch(/No encontré información/);
+  });
+});
+
+describe("explain", () => {
+  it("puntúa todos los fragmentos y marca los términos compartidos", () => {
+    const rag = new RagPipeline(null);
+    rag.indexDocuments(docs);
+    const { results } = rag.explain("¿Hay envío gratis?");
+    expect(results.length).toBe(rag.chunks.length);
+    expect(results[0].matched).toContain("envio");
+  });
+});

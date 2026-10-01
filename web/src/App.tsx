@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Demo } from "./Demo";
 import { REPO_URL } from "./guide/chapters";
 import { Guide } from "./guide/Guide";
+import { Lab } from "./Lab";
 
 /**
  * Navegación por hash (#/ y #/guia/<capitulo>#<seccion>): funciona en GitHub Pages
@@ -9,6 +10,7 @@ import { Guide } from "./guide/Guide";
  */
 function parseHash(hash: string) {
   const [path, anchor = null] = hash.replace(/^#/, "").split("#");
+  if (path.startsWith("/laboratorio")) return { page: "lab" as const, slug: null, anchor: null };
   const m = path.match(/^\/guia(?:\/([\w-]+))?/);
   return m ? { page: "guia" as const, slug: m[1] ?? null, anchor } : { page: "demo" as const, slug: null, anchor: null };
 }
@@ -32,6 +34,9 @@ export default function App() {
           <a href="#/" className={route.page === "demo" ? "current" : ""}>
             Demo
           </a>
+          <a href="#/laboratorio" className={route.page === "lab" ? "current" : ""}>
+            Paso a paso
+          </a>
           <a href="#/guia" className={route.page === "guia" ? "current" : ""}>
             Guía
           </a>
@@ -40,7 +45,13 @@ export default function App() {
           </a>
         </div>
       </nav>
-      {route.page === "guia" ? <Guide slug={route.slug} anchor={route.anchor} /> : <Demo />}
+      {route.page === "guia" ? (
+        <Guide slug={route.slug} anchor={route.anchor} />
+      ) : route.page === "lab" ? (
+        <Lab />
+      ) : (
+        <Demo />
+      )}
     </>
   );
 }

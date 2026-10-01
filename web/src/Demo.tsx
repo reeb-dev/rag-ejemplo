@@ -95,7 +95,8 @@ export function Demo() {
             modelo conoce. Todo lo que sepa lo saca de sus documentos.
           </p>
           <p className="subtitle">
-            ¿Primera vez con RAG? Lee <a href="#/guia/01-que-es-rag">qué es</a> o sigue la{" "}
+            ¿Primera vez con RAG? Lee <a href="#/guia/01-que-es-rag">qué es</a>, mira cómo funciona en el{" "}
+            <a href="#/laboratorio">laboratorio paso a paso</a> (no necesita clave de API) o sigue la{" "}
             <a href="#/guia">guía completa</a>.
           </p>
         </div>
@@ -180,7 +181,7 @@ function StatusBadge({ engine }: { engine: Engine | null }) {
       </span>
       <span>{engine.kind === "server" ? "RAG en el servidor (Node)" : "RAG en tu navegador"}</span>
       <span className={info.model ? "ok" : "warn"}>
-        {info.model ? `Modelo: ${info.model}` : "Solo recuperación (sin clave de API)"}
+        {info.model ? `Modelo: ${info.model}` : "Sin IA: respuestas extractivas"}
       </span>
     </div>
   );
@@ -213,10 +214,10 @@ function ApiKeyBox({ apiKey, onChange }: { apiKey: string; onChange: (key: strin
   };
   return (
     <details className="apikey" open={!apiKey}>
-      <summary>{apiKey ? "Clave de API configurada ✓" : "Opcional: usa tu clave de API de Anthropic para generar respuestas"}</summary>
+      <summary>{apiKey ? "Clave de API configurada ✓" : "Opcional: usa tu clave de API de Anthropic para que Claude redacte las respuestas"}</summary>
       <p>
-        Sin clave la demo funciona en <strong>modo solo recuperación</strong>: verás qué fragmentos se enviarían al
-        modelo. Con tu clave, tu navegador llama directamente a la API de Claude. La clave se guarda solo en este
+        Sin clave la demo funciona igual, sin IA: busca los fragmentos y arma la respuesta copiando las frases más
+        relevantes. Con tu clave, tu navegador llama directamente a la API de Claude, que redacta la respuesta. La clave se guarda solo en este
         navegador y no pasa por ningún otro servidor. Consíguela en{" "}
         <a href="https://console.anthropic.com/" target="_blank" rel="noreferrer">
           console.anthropic.com

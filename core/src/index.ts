@@ -5,6 +5,7 @@
 export * from "./chunker.js";
 export * from "./documents.js";
 export * from "./embeddings.js";
+export * from "./extractive.js";
 export * from "./generator.js";
 export * from "./pipeline.js";
 export * from "./prompt.js";

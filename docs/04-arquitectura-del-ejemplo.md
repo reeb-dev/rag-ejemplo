@@ -91,8 +91,19 @@ respuesta a medida que Claude lo genera.
 - **Respaldo del servidor** (`fallbacks: "default"`): si el modelo declina una petición,
   la API la reintenta con otro modelo automáticamente.
 
-Sin clave, la app funciona en **modo solo recuperación**: muestra los fragmentos que se
-enviarían al modelo. Así se puede estudiar la parte de búsqueda sin ninguna cuenta.
+Sin clave, la app responde **sin IA**, con una respuesta *extractiva*
+([`extractive.ts`](../core/src/extractive.ts)): elige las frases de los fragmentos
+recuperados que más términos comparten con la pregunta y las copia con su cita. Si
+ninguna frase cubre la pregunta, responde que no encontró la información. Así se puede
+estudiar RAG completo sin ninguna cuenta, y comparar con lo que agrega un LLM.
+
+## El laboratorio paso a paso
+
+La pestaña **Paso a paso** de la web ([`web/src/Lab.tsx`](../web/src/Lab.tsx)) muestra
+por dentro cada etapa para una pregunta, sin clave de API: los términos en que se
+convierte la pregunta y su peso, el puntaje de **todos** los fragmentos con el corte de
+top-k, el prompt exacto que recibiría el modelo y la respuesta extractiva. Incluye seis
+ejemplos guiados, cada uno con lo que conviene observar.
 
 ### La clave de API en la versión estática
 

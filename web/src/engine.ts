@@ -44,12 +44,17 @@ const files = import.meta.glob("../../data/*.{md,txt}", { query: "?raw", import:
   string
 >;
 
-export function createBrowserEngine(apiKey: string): Engine {
-  const docs = Object.entries(files)
+/** Los documentos de data/ que vienen dentro de la web. */
+export function loadBundledDocuments() {
+  return Object.entries(files)
     .map(([p, text]) => [p.split("/").pop()!, text] as const)
     .filter(([name]) => isKnowledgeFile(name))
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, text]) => parseDocument(name, text));
+}
+
+export function createBrowserEngine(apiKey: string): Engine {
+  const docs = loadBundledDocuments();
 
   const generator = apiKey.trim() ? new ClaudeGenerator({ apiKey: apiKey.trim(), browser: true }) : null;
   const rag = new RagPipeline(generator);

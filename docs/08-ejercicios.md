@@ -5,6 +5,9 @@ taller o una clase.
 
 ## Nivel 1: observar
 
+> Todos los ejercicios de este nivel se pueden hacer sin clave de API. La pestaña
+> **Paso a paso** de la web tiene además seis ejemplos guiados con lo que conviene observar.
+
 1. **Con y sin RAG.** Activa "Comparar con una respuesta sin RAG" y prueba las preguntas de
    ejemplo. ¿En cuáles inventa el modelo sin RAG? ¿En cuáles admite que no sabe?
 2. **Qué ve el modelo.** Mira los fragmentos recuperados para "¿Abren los domingos?".

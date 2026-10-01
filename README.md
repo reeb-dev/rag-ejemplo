@@ -6,9 +6,10 @@ conviene usarlo.
 
 ### 👉 [Probar la demo en vivo](https://reeb-dev.github.io/rag-ejemplo/) · [Leer la guía en la web](https://reeb-dev.github.io/rag-ejemplo/#/guia)
 
-La demo en GitHub Pages funciona sin instalar nada: la búsqueda corre en tu navegador. Para
-que además redacte respuestas, pega tu propia clave de API de Anthropic (se guarda solo en
-tu navegador).
+La web funciona sin instalar nada y **sin clave de API**: la búsqueda corre en tu navegador
+y la pestaña **Paso a paso** muestra, con seis ejemplos guiados, qué pasa por dentro en
+cada etapa de RAG. Si además quieres que Claude redacte las respuestas, pega tu propia
+clave de API de Anthropic (se guarda solo en tu navegador).
 
 ![Captura de la app comparando una respuesta con RAG y sin RAG](docs/img/captura.png)
 
@@ -49,7 +50,9 @@ La interfaz muestra:
 - la **respuesta en streaming** con citas `[1]`, `[2]` enlazadas a su fuente;
 - los **fragmentos recuperados** con su puntuación de similitud;
 - un modo **"comparar sin RAG"** para ver lado a lado cómo responde el modelo sin contexto;
-- un control **top-k** para cambiar cuántos fragmentos se recuperan.
+- un control **top-k** para cambiar cuántos fragmentos se recuperan;
+- un **laboratorio paso a paso**, sin clave de API, que muestra los términos de la
+  pregunta, el puntaje de todos los fragmentos, el prompt exacto y la respuesta.
 
 ## Cómo ejecutarlo en tu computadora
 
@@ -66,8 +69,8 @@ npm run dev
 Abre <http://localhost:5173>.
 
 - La clave se obtiene en <https://console.anthropic.com/>.
-- **Sin clave también funciona**, en *modo solo recuperación*: verás qué fragmentos se
-  enviarían al modelo, que es la parte más interesante para entender RAG.
+- **Sin clave también funciona**, sin IA: busca los fragmentos y arma la respuesta
+  copiando las frases más relevantes. La pestaña *Paso a paso* muestra todo el proceso.
 
 Otros comandos:
 

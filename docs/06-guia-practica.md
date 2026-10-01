@@ -58,8 +58,9 @@ CONTACTAR / DÓNDE BUSCAR>. No inventes datos.
 
 ## Paso 4: prueba la recuperación antes que la generación
 
-Primero asegúrate de que el buscador encuentra lo correcto. Sin clave de API, la app ya
-funciona en modo solo recuperación. También puedes usar la terminal:
+Primero asegúrate de que el buscador encuentra lo correcto. La pestaña **Paso a paso** de
+la web muestra el puntaje de cada fragmento para cualquier pregunta, sin clave de API.
+También puedes usar la terminal:
 
 ```bash
 npm run query -w server -- "tu pregunta"

@@ -14,7 +14,7 @@ export const config = {
   },
 };
 
-/** ¿Hay credenciales para llamar a Claude? Sin ellas el servidor funciona en modo solo recuperación. */
+/** ¿Hay credenciales para llamar a Claude? Sin ellas el servidor responde de forma extractiva, sin IA. */
 export function hasClaudeCredentials(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 }

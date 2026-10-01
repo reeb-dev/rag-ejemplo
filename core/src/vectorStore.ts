@@ -1,6 +1,11 @@
 import { cosineSimilarity, type Embedder, type SparseVector } from "./embeddings.js";
 import type { Chunk, RetrievedChunk } from "./types.js";
 
+export interface ExplainedChunk extends RetrievedChunk {
+  /** Términos de la consulta que también aparecen en el fragmento. */
+  matched: string[];
+}
+
 /**
  * Paso 4 del indexado: guardar los vectores.
  *
@@ -29,6 +34,22 @@ export class InMemoryVectorStore {
       .filter((r) => r.score >= minScore)
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
+  }
+
+  /**
+   * Para aprender: puntúa TODOS los fragmentos (no solo los top-k) e indica qué
+   * términos de la consulta comparte cada uno.
+   */
+  explain(query: string): { query: SparseVector; results: ExplainedChunk[] } {
+    const q = this.embedder.embed(query);
+    const results = this.entries
+      .map(({ chunk, vector }) => ({
+        ...chunk,
+        score: cosineSimilarity(q, vector),
+        matched: [...q.keys()].filter((t) => vector.has(t)),
+      }))
+      .sort((a, b) => b.score - a.score);
+    return { query: q, results };
   }
 
   get size(): number {

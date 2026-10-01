@@ -1,5 +1,6 @@
 import { chunkDocuments, type ChunkOptions } from "./chunker.js";
 import { TfIdfEmbedder, type Embedder } from "./embeddings.js";
+import { extractiveAnswer } from "./extractive.js";
 import type { Generator } from "./generator.js";
 import { buildRagUserMessage, NO_RAG_SYSTEM_PROMPT, RAG_SYSTEM_PROMPT } from "./prompt.js";
 import type { RetrievedChunk, SourceDocument } from "./types.js";
@@ -45,16 +46,8 @@ export class RagPipeline {
     yield { type: "sources", sources };
 
     if (!this.generator) {
-      // Modo solo recuperación: sin clave de API mostramos qué se habría enviado al modelo.
-      yield {
-        type: "delta",
-        text:
-          mode === "rag"
-            ? "_Modo solo recuperación (no hay clave de API configurada)._ " +
-              "Estos son los fragmentos que se enviarían a Claude como contexto; " +
-              "configura una clave de API para obtener una respuesta redactada."
-            : "_Sin clave de API no se puede consultar al modelo sin RAG._",
-      };
+      // Sin clave de API: respuesta "extractiva", armada con frases copiadas de los fragmentos.
+      yield { type: "delta", text: this.answerWithoutModel(question, mode, sources) };
       yield { type: "done" };
       return;
     }
@@ -68,6 +61,29 @@ export class RagPipeline {
       yield { type: "delta", text };
     }
     yield { type: "done" };
+  }
+
+  /** Puntuación de todos los fragmentos para una pregunta (para el laboratorio paso a paso). */
+  explain(question: string) {
+    return this.store.explain(question);
+  }
+
+  private answerWithoutModel(question: string, mode: AnswerMode, sources: RetrievedChunk[]): string {
+    if (mode === "sin-rag") {
+      return (
+        "_Sin RAG y sin modelo no hay de dónde sacar la respuesta._ Un LLM sin documentos tendría que " +
+        "responder de memoria, y ningún modelo conoce a Bicicletas Aurora: en el mejor caso diría que no lo " +
+        "sabe y en el peor inventaría un dato. Configura una clave de API para ver qué responde realmente."
+      );
+    }
+    const answer = extractiveAnswer(question, this.store.explain(question).query, sources);
+    const note =
+      "\n\n_Respuesta extractiva, sin IA: son las frases de los fragmentos que más se parecen a la " +
+      "pregunta, copiadas tal cual. Con una clave de API, Claude las leería y redactaría la respuesta._";
+    return answer
+      ? answer + note
+      : "_No encontré información sobre eso en los documentos._ Un buen sistema RAG debería decir esto " +
+          "en lugar de inventar una respuesta.";
   }
 
   stats() {

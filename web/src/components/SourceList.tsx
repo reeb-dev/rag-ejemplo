@@ -23,7 +23,7 @@ export function SourceList({ sources, loading }: { sources: Source[]; loading: b
                 {s.score.toFixed(2)}
               </span>
             </div>
-            <pre>{s.text}</pre>
+            <pre>{s.text.replace(/\*\*/g, "")}</pre>
           </li>
         ))}
       </ol>

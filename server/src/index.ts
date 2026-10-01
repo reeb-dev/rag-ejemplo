@@ -79,7 +79,7 @@ app.listen(config.port, () => {
   console.log(
     generator
       ? `  Generación con ${generator.model}`
-      : "  Sin ANTHROPIC_API_KEY: modo solo recuperación (ver .env.example)",
+      : "  Sin ANTHROPIC_API_KEY: respuestas extractivas sin IA (ver .env.example)",
   );
 });
 

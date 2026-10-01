@@ -37,13 +37,24 @@ const STOPWORDS = new Set(
 
 /** Normaliza y separa un texto en términos: minúsculas, sin tildes, sin stopwords, con raíz aproximada. */
 export function tokenize(text: string): string[] {
-  return text
+  return splitWords(text)
+    .map(toTerm)
+    .filter((t): t is string => t !== null);
+}
+
+/** Separa un texto en palabras (sin normalizar). */
+export function splitWords(text: string): string[] {
+  return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+}
+
+/** Convierte una palabra en el término que se indexa, o null si se descarta (stopword o muy corta). */
+export function toTerm(word: string): string | null {
+  const t = word
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // quita tildes: "garantía" -> "garantia"
-    .split(/[^a-z0-9ñ]+/)
-    .filter((t) => t.length > 1 && !STOPWORDS.has(t))
-    .map(stem);
+    .replace(/[\u0300-\u036f]/g, ""); // quita tildes: "garantía" -> "garantia"
+  if (t.length <= 1 || STOPWORDS.has(t) || !/^[a-z0-9ñ]+$/.test(t)) return null;
+  return stem(t);
 }
 
 /**
