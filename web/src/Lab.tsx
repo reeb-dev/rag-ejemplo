@@ -25,7 +25,7 @@ const SCENARIOS: Scenario[] = [
     lesson: (
       <>
         Bicicletas Aurora no existe, así que ningún modelo sabe esto de memoria. Mira cómo los fragmentos de
-        garantía y del catálogo quedan arriba en el paso 2: ese es el dato que el modelo necesita y que RAG le
+        garantía y del catálogo quedan arriba en la etapa Recuperar: ese es el dato que el modelo necesita y que RAG le
         alcanza.
       </>
     ),
@@ -36,8 +36,8 @@ const SCENARIOS: Scenario[] = [
     topK: 4,
     lesson: (
       <>
-        En el paso 1, "monopatines" aparece marcado como <em>no está en los documentos</em>. Los puntajes del
-        paso 2 son bajos y ninguna frase responde la pregunta. Un buen RAG debe decir "no lo sé" en vez de
+        En la etapa Recuperar, "monopatines" aparece marcado como <em>no está en los documentos</em> y
+        los puntajes son bajos y ninguna frase responde la pregunta. Un buen RAG debe decir "no lo sé" en vez de
         inventar.
       </>
     ),
@@ -116,17 +116,46 @@ export function Lab() {
   const answer = extractiveAnswer(question, query, sources);
   const current = scenario >= 0 ? SCENARIOS[scenario] : null;
 
+  const stats = rag.stats();
+  const chunksPerDoc = stats.documents.map((d) => ({
+    ...d,
+    chunks: rag.chunks.filter((c) => c.docId === d.id).length,
+  }));
+  const exampleChunk = rag.chunks.find((c) => c.section.endsWith("Cobertura")) ?? rag.chunks[0];
+
   return (
     <div className="page lab">
       <header>
         <h1>Laboratorio: RAG paso a paso</h1>
         <p className="subtitle">
-          Mira por dentro qué hace un sistema RAG con cada pregunta. Funciona en tu navegador, sin clave de API ni
-          inteligencia artificial: la búsqueda es real y la respuesta final se arma copiando frases de los
-          documentos. Elige un ejemplo o escribe tu pregunta.
+          Aquí puedes ver qué hace un sistema RAG por dentro con cada pregunta, y para qué sirve cada etapa. Funciona en
+          tu navegador, sin clave de API: la búsqueda es real y la respuesta final se arma copiando frases de los
+          documentos.
         </p>
       </header>
 
+      <section className="overview" aria-label="Las etapas de RAG">
+        <h2>Las etapas de RAG</h2>
+        <p className="hint">
+          RAG significa <em>Retrieval-Augmented Generation</em>: generación (G) aumentada (A) con información recuperada
+          (R). Antes de responder, el sistema busca en tus documentos lo que necesita y se lo da al modelo. Tiene una
+          etapa de preparación que se hace una sola vez y tres etapas que se repiten con cada pregunta.
+        </p>
+        <ol className="stages">
+          {STAGES.map((st) => (
+            <li key={st.id}>
+              <a href={`#ancla-${st.id}`} onClick={(e) => scrollTo(e, st.id)}>
+                <span className="stage-letter">{st.letter}</span>
+                <strong>{st.name}</strong>
+                <span>{st.short}</span>
+                <small>{st.when}</small>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <h2 className="try-title">Prueba con un ejemplo</h2>
       <div className="scenarios">
         {SCENARIOS.map((s, i) => (
           <button key={s.title} className={`scenario ${i === scenario ? "current" : ""}`} onClick={() => pick(i)}>
@@ -155,43 +184,89 @@ export function Lab() {
         <button type="submit">Analizar</button>
       </form>
 
-      <LabStep n={1} title="La pregunta se convierte en términos">
+      <Stage stage={STAGES[0]}>
+        <p>
+          Los <strong>{stats.documents.length} documentos</strong> de Bicicletas Aurora se cortaron en{" "}
+          <strong>{stats.chunks} fragmentos</strong>, uno por sección, y cada fragmento se convirtió en un vector. Esto
+          pasó una sola vez, al abrir la página, antes de tu pregunta.
+        </p>
+        <table className="docs-table">
+          <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Fragmentos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chunksPerDoc.map((d) => (
+              <tr key={d.id}>
+                <td>
+                  {d.title} <small>({d.id})</small>
+                </td>
+                <td>{d.chunks}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <details>
+          <summary>Ver un fragmento de ejemplo</summary>
+          <div className="chunk-example">
+            <div className="where">
+              {exampleChunk.docId} › {exampleChunk.section}
+            </div>
+            <pre>{exampleChunk.text.replace(/\*\*/g, "")}</pre>
+          </div>
+        </details>
+      </Stage>
+
+      <Stage stage={STAGES[1]}>
+        <h3>a) La pregunta se convierte en términos</h3>
         <p className="hint">
-          Se pasa a minúsculas, se quitan tildes y palabras vacías ("la", "de", "los") y cada palabra se reduce a su
-          raíz. El número indica el peso de cada término: las palabras raras pesan más que las comunes.
+          La pregunta pasa por el mismo proceso que los fragmentos: minúsculas, sin tildes, sin palabras vacías ("la",
+          "de", "los") y cada palabra reducida a su raíz. El número es el peso del término: las palabras raras pesan
+          más que las comunes.
         </p>
         <QueryTerms question={question} query={query} />
-      </LabStep>
 
-      <LabStep n={2} title={`Se compara con los ${results.length} fragmentos y se eligen los ${topK} más parecidos`}>
+        <h3>b) Se buscan los fragmentos más parecidos</h3>
         <p className="hint">
-          Cada fragmento recibe un puntaje de similitud (0 a 1). Resaltadas, las palabras que comparte con la
-          pregunta. Solo los que están por encima de la línea llegan al modelo.
+          Se compara el vector de la pregunta con el de cada uno de los {results.length} fragmentos y se ordenan por
+          similitud (0 a 1). Resaltadas, las palabras que comparten. Solo los que quedan por encima de la línea pasan a
+          la siguiente etapa.
         </p>
         <label className="topk">
           Fragmentos a recuperar (top-k): <strong>{topK}</strong>
           <input type="range" min={1} max={8} value={topK} onChange={(e) => setTopK(Number(e.target.value))} />
         </label>
         <Ranking results={results} topK={topK} />
-      </LabStep>
+      </Stage>
 
-      <LabStep n={3} title="Se arma el prompt con el contexto">
-        <p className="hint">
-          Las instrucciones, los fragmentos elegidos y la pregunta se juntan en un solo texto. Esto es exactamente lo
-          que recibiría el modelo.
-        </p>
-        <details>
-          <summary>Ver el prompt completo ({sources.length} fragmentos)</summary>
-          <pre className="prompt">
-            {`[Instrucciones del sistema]\n${RAG_SYSTEM_PROMPT}\n\n[Mensaje]\n${buildRagUserMessage(question, sources)}`}
-          </pre>
-        </details>
-      </LabStep>
+      <Stage stage={STAGES[2]}>
+        <p className="hint">El prompt que recibe el modelo tiene tres partes:</p>
+        <div className="prompt-parts">
+          <div className="part instr">
+            <span className="part-label">1. Instrucciones</span>
+            <pre>{RAG_SYSTEM_PROMPT}</pre>
+          </div>
+          <div className="part ctx">
+            <span className="part-label">2. Contexto: los {sources.length} fragmentos recuperados</span>
+            {sources.length ? (
+              <pre>{buildRagUserMessage(question, sources).split("\n\nPregunta:")[0]}</pre>
+            ) : (
+              <p className="hint">No se recuperó ningún fragmento: el modelo no tendría contexto.</p>
+            )}
+          </div>
+          <div className="part q">
+            <span className="part-label">3. La pregunta</span>
+            <pre>Pregunta: {question}</pre>
+          </div>
+        </div>
+      </Stage>
 
-      <LabStep n={4} title="Se genera la respuesta">
+      <Stage stage={STAGES[3]}>
         <p className="hint">
-          Aquí, sin IA, se copian las frases de los fragmentos que más se parecen a la pregunta. Un modelo de
-          lenguaje leería los mismos fragmentos, entendería la pregunta y redactaría una respuesta.
+          Sin clave de API, aquí no hay un modelo de lenguaje: la respuesta se arma copiando las frases de los fragmentos
+          que más se parecen a la pregunta, con su cita.
         </p>
         <div className="answer lab-answer">
           {answer ? (
@@ -207,18 +282,168 @@ export function Lab() {
           ¿Quieres ver la respuesta redactada por Claude? Prueba la misma pregunta en la <a href="#/">demo</a> con tu
           clave de API.
         </p>
-      </LabStep>
+      </Stage>
+
+      <section className="recap">
+        <h2>En resumen</h2>
+        <p>
+          <strong>Preparar</strong> deja los documentos listos para buscar. <strong>Recuperar</strong> encuentra lo
+          relevante para cada pregunta. <strong>Aumentar</strong> se lo entrega al modelo junto con instrucciones claras.{" "}
+          <strong>Generar</strong> convierte eso en una respuesta con fuentes. Si una respuesta sale mal, casi siempre se
+          puede saber en qué etapa falló mirando esta página. Para seguir aprendiendo:{" "}
+          <a href="#/guia/02-como-funciona">cómo funciona RAG en detalle</a> y{" "}
+          <a href="#/guia/07-sacarle-el-jugo">cómo mejorar cada etapa</a>.
+        </p>
+      </section>
     </div>
   );
 }
 
-function LabStep({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+function scrollTo(e: React.MouseEvent, id: string) {
+  e.preventDefault();
+  document.getElementById(`etapa-${id}`)?.scrollIntoView({ behavior: "smooth" });
+}
+
+interface StageInfo {
+  id: string;
+  letter: string;
+  name: string;
+  short: string;
+  when: string;
+  what: ReactNode;
+  why: ReactNode;
+  real: ReactNode;
+}
+
+const STAGES: StageInfo[] = [
+  {
+    id: "preparar",
+    letter: "0",
+    name: "Preparar (indexar)",
+    short: "Cortar los documentos en fragmentos y convertirlos en vectores.",
+    when: "Una sola vez",
+    what: (
+      <>
+        Los documentos se dividen en fragmentos chicos, de un solo tema, y cada fragmento se convierte en un vector: una
+        lista de números que representa de qué habla. Los vectores se guardan para poder buscarlos rápido.
+      </>
+    ),
+    why: (
+      <>
+        Buscar en fragmentos chicos permite encontrar el párrafo exacto en lugar de un documento entero. Y como se hace
+        una sola vez, cada pregunta después es rápida y barata.
+      </>
+    ),
+    real: (
+      <>
+        Un modelo de embeddings (por ejemplo, Voyage AI) genera vectores que capturan el significado, y se guardan en una
+        base de datos vectorial como pgvector o Qdrant. Aquí, para que funcione sin internet, se usa TF-IDF: un vector
+        de palabras con pesos.
+      </>
+    ),
+  },
+  {
+    id: "recuperar",
+    letter: "R",
+    name: "Recuperar",
+    short: "Buscar los fragmentos más parecidos a la pregunta.",
+    when: "Con cada pregunta",
+    what: (
+      <>
+        La pregunta se convierte en un vector con el mismo método que los fragmentos, y se buscan los <em>k</em>{" "}
+        fragmentos cuyo vector se parece más (top-k).
+      </>
+    ),
+    why: (
+      <>
+        Es la etapa más importante: si el fragmento con la respuesta no aparece aquí, ningún modelo puede responder bien.
+        La mayoría de los errores de un RAG nacen en esta etapa.
+      </>
+    ),
+    real: (
+      <>
+        Se combina la búsqueda por significado (embeddings) con la búsqueda por palabras clave, y a veces un modelo de
+        re-ranking reordena los candidatos. Ver <a href="#/guia/07-sacarle-el-jugo">Sácale el jugo a RAG</a>.
+      </>
+    ),
+  },
+  {
+    id: "aumentar",
+    letter: "A",
+    name: "Aumentar",
+    short: "Agregar esos fragmentos al prompt, junto con la pregunta.",
+    when: "Con cada pregunta",
+    what: (
+      <>
+        Se arma el texto que recibe el modelo: instrucciones ("responde solo con el contexto, cita las fuentes, si no
+        está di que no lo sabes"), los fragmentos recuperados numerados y la pregunta.
+      </>
+    ),
+    why: (
+      <>
+        El modelo no busca nada por su cuenta: solo sabe lo que está en este texto. Las instrucciones evitan que invente
+        y la numeración permite que cite de dónde saca cada dato.
+      </>
+    ),
+    real: (
+      <>
+        Es igual a lo que ves aquí. Se puede mejorar con <em>prompt caching</em> para las partes fijas o con la función de
+        citas nativas de la API de Claude.
+      </>
+    ),
+  },
+  {
+    id: "generar",
+    letter: "G",
+    name: "Generar",
+    short: "El modelo lee el contexto y redacta la respuesta.",
+    when: "Con cada pregunta",
+    what: (
+      <>
+        Un modelo de lenguaje (como Claude) lee los fragmentos, entiende la pregunta y redacta una respuesta en lenguaje
+        natural, citando de qué fragmento sale cada dato.
+      </>
+    ),
+    why: (
+      <>
+        La búsqueda encuentra la información, pero no la entiende: puede traer frases de más o de menos. El modelo
+        combina datos de varios fragmentos, descarta lo que no aplica y responde exactamente lo que se preguntó.
+      </>
+    ),
+    real: (
+      <>
+        Se llama a un LLM con el prompt de la etapa anterior, normalmente con <em>streaming</em> para que la respuesta
+        aparezca palabra por palabra. Es lo que hace la <a href="#/">demo</a> cuando le das una clave de API.
+      </>
+    ),
+  },
+];
+
+function Stage({ stage, children }: { stage: StageInfo; children: ReactNode }) {
   return (
-    <section className="lab-step">
+    <section className="lab-step" id={`etapa-${stage.id}`}>
       <h2>
-        <span className="badge">{n}</span> {title}
+        <span className="badge">{stage.letter}</span> {stage.name}
+        <small className="when">{stage.when}</small>
       </h2>
-      {children}
+      <dl className="explainer">
+        <div>
+          <dt>Qué hace</dt>
+          <dd>{stage.what}</dd>
+        </div>
+        <div>
+          <dt>Por qué importa</dt>
+          <dd>{stage.why}</dd>
+        </div>
+        <div>
+          <dt>En un RAG real</dt>
+          <dd>{stage.real}</dd>
+        </div>
+      </dl>
+      <div className="stage-body">
+        <h3 className="in-example">En este ejemplo</h3>
+        {children}
+      </div>
     </section>
   );
 }

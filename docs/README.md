@@ -17,7 +17,7 @@ acompañada de una aplicación de ejemplo que puedes ejecutar y modificar.
 
 **Rutas sugeridas:**
 
-- **10 minutos:** capítulos 1 y 3.
+- **10 minutos:** capítulos 1 y 3, y el [laboratorio paso a paso](https://reeb-dev.github.io/rag-ejemplo/#/laboratorio).
 - **Quiero usar RAG con mis documentos:** 1, 2, 6 y 7.
 - **Voy a enseñar el tema:** todo en orden, con los ejercicios del capítulo 8 y la app abierta.
 

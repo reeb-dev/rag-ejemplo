@@ -4,55 +4,145 @@ Una aplicación pequeña y completa de **RAG** (*Retrieval-Augmented Generation*
 **documentación en español** para aprender y enseñar qué es, cómo funciona y por qué
 conviene usarlo.
 
-### 👉 [Probar la demo en vivo](https://reeb-dev.github.io/rag-ejemplo/) · [Leer la guía en la web](https://reeb-dev.github.io/rag-ejemplo/#/guia)
+### 👉 [Abrir la web](https://reeb-dev.github.io/rag-ejemplo/) · [Paso a paso, sin clave de API](https://reeb-dev.github.io/rag-ejemplo/#/laboratorio) · [Guía](https://reeb-dev.github.io/rag-ejemplo/#/guia)
 
-La web funciona sin instalar nada y **sin clave de API**: la búsqueda corre en tu navegador
-y la pestaña **Paso a paso** muestra, con seis ejemplos guiados, qué pasa por dentro en
-cada etapa de RAG. Si además quieres que Claude redacte las respuestas, pega tu propia
-clave de API de Anthropic (se guarda solo en tu navegador).
+![El laboratorio paso a paso: las etapas de RAG explicadas con una pregunta real](docs/img/laboratorio.png)
 
-![Captura de la app comparando una respuesta con RAG y sin RAG](docs/img/captura.png)
+## ¿Qué es RAG?
 
-<sub>Captura ilustrativa: las respuestas exactas del modelo varían.</sub>
+**RAG** (*Retrieval-Augmented Generation*, "generación aumentada por recuperación") es
+una técnica para que un modelo de lenguaje como Claude o ChatGPT responda usando
+información que **no estaba en su entrenamiento**: los documentos de una empresa, los
+apuntes de un curso, manuales o políticas internas.
 
-## ¿Qué es RAG, en 30 segundos?
+Un modelo sabe muchísimo, pero no conoce tus documentos, no sabe lo que pasó después de
+su entrenamiento y, cuando no sabe algo, a veces lo inventa. RAG lo resuelve así:
 
-Un modelo de lenguaje no conoce tus documentos privados y, cuando no sabe algo, puede
-inventarlo. RAG lo resuelve en tres pasos:
+> Antes de preguntarle al modelo, **busca** en tus documentos los fragmentos que tienen
+> que ver con la pregunta y **dáselos** junto con ella, para que responda en base a eso.
 
-1. **Recuperar:** buscar en tus documentos los fragmentos relevantes para la pregunta.
-2. **Aumentar:** pegarlos en el prompt como contexto.
-3. **Generar:** el modelo responde usando ese contexto y citando las fuentes.
+Es como pasar de un examen a libro cerrado a uno a libro abierto, con un bibliotecario
+que te alcanza justo las páginas que necesitas.
+
+## Las etapas de RAG
 
 ```mermaid
 flowchart LR
-  Q[Pregunta] --> R[1. Recuperar<br/>fragmentos similares]
-  DB[(Documentos<br/>indexados)] --> R
-  R --> A[2. Aumentar<br/>prompt + contexto]
-  A --> G[3. Generar<br/>Claude]
-  G --> Resp[Respuesta con citas]
+  subgraph Una_vez["Una sola vez"]
+    D[Documentos] --> P["0. Preparar<br/>fragmentos + vectores"]
+  end
+  subgraph Cada_pregunta["Con cada pregunta"]
+    Q[Pregunta] --> R["R · Recuperar<br/>fragmentos más parecidos"]
+    R --> A["A · Aumentar<br/>prompt = instrucciones + fragmentos + pregunta"]
+    A --> G["G · Generar<br/>el modelo redacta"]
+    G --> Resp[Respuesta con citas]
+  end
+  P --> R
 ```
 
-**Ventajas principales:** usa datos propios sin reentrenar el modelo, reduce las
-alucinaciones, se actualiza con solo cambiar los documentos, cita sus fuentes, es barato
-por consulta y permite controlar qué ve cada usuario.
-Detalle completo en [Beneficios y ventajas](docs/03-beneficios-y-ventajas.md).
+### 0. Preparar (indexar) · una sola vez
 
-## La demo
+- **Qué hace:** corta los documentos en fragmentos chicos, de un solo tema, y convierte
+  cada uno en un **vector**, una lista de números que representa de qué habla.
+- **Por qué importa:** buscar en fragmentos permite encontrar el párrafo exacto, y como se
+  hace una sola vez, cada pregunta después es rápida y barata.
+- **En este ejemplo:** 5 documentos se convierten en 18 fragmentos, uno por sección
+  ([`chunker.ts`](core/src/chunker.ts), [`embeddings.ts`](core/src/embeddings.ts)).
 
-El asistente responde preguntas sobre **Bicicletas Aurora**, una empresa **inventada**
-cuyos documentos están en [`data/`](data). Como ningún modelo puede conocerla, cada
-respuesta correcta demuestra que la información vino de la recuperación.
+### R · Recuperar · con cada pregunta
 
-La interfaz muestra:
+- **Qué hace:** convierte la pregunta en un vector con el mismo método y busca los *k*
+  fragmentos más parecidos (**top-k**).
+- **Por qué importa:** es la etapa clave. Si el fragmento con la respuesta no aparece aquí,
+  ningún modelo puede responder bien.
+- **En este ejemplo:** similitud coseno sobre vectores TF-IDF
+  ([`vectorStore.ts`](core/src/vectorStore.ts)). En un RAG real se usan embeddings que
+  capturan el significado y una base de datos vectorial.
 
-- los **tres pasos** de RAG mientras se procesa la pregunta;
-- la **respuesta en streaming** con citas `[1]`, `[2]` enlazadas a su fuente;
-- los **fragmentos recuperados** con su puntuación de similitud;
-- un modo **"comparar sin RAG"** para ver lado a lado cómo responde el modelo sin contexto;
-- un control **top-k** para cambiar cuántos fragmentos se recuperan;
-- un **laboratorio paso a paso**, sin clave de API, que muestra los términos de la
-  pregunta, el puntaje de todos los fragmentos, el prompt exacto y la respuesta.
+### A · Aumentar · con cada pregunta
+
+- **Qué hace:** arma el texto que recibe el modelo con tres partes: **instrucciones**
+  ("responde solo con el contexto, cita las fuentes, si no está di que no lo sabes"), los
+  **fragmentos** recuperados y numerados, y la **pregunta**.
+- **Por qué importa:** el modelo solo sabe lo que está en ese texto. Las instrucciones
+  evitan que invente y la numeración permite citar de dónde sale cada dato.
+- **En este ejemplo:** [`prompt.ts`](core/src/prompt.ts).
+
+### G · Generar · con cada pregunta
+
+- **Qué hace:** el modelo lee los fragmentos, entiende la pregunta y redacta la respuesta
+  citando las fuentes `[1]`, `[2]`.
+- **Por qué importa:** la búsqueda encuentra la información pero no la entiende. El modelo
+  combina datos de varios fragmentos, descarta lo que no aplica y responde lo que se
+  preguntó.
+- **En este ejemplo:** Claude con *streaming* ([`generator.ts`](core/src/generator.ts)).
+  Sin clave de API, una respuesta *extractiva* que copia las frases más relevantes
+  ([`extractive.ts`](core/src/extractive.ts)).
+
+Explicación completa en [Cómo funciona paso a paso](docs/02-como-funciona.md).
+
+## Beneficios
+
+1. **Usa tus propios datos** sin reentrenar el modelo.
+2. **Inventa mucho menos:** tiene el dato delante y puede decir "no lo sé".
+3. **Siempre actualizado:** alcanza con cambiar los documentos.
+4. **Respuestas verificables:** cada dato indica de qué fragmento salió.
+5. **Más barato:** solo envía al modelo lo relevante, no todos los documentos.
+6. **Control de acceso:** puedes filtrar qué documentos ve cada usuario.
+7. **Independiente del modelo:** el conocimiento vive en tus documentos.
+8. **Fácil de empezar** y de mejorar por partes.
+
+Detalle, comparación con fine-tuning y casos de uso en
+[Beneficios y ventajas](docs/03-beneficios-y-ventajas.md).
+
+## Cómo usar la web
+
+La web tiene tres secciones y funciona sin instalar nada. Todo el ejemplo gira en torno a
+**Bicicletas Aurora**, una empresa **inventada** cuyos documentos están en
+[`data/`](data): como ningún modelo puede conocerla, cada respuesta correcta demuestra que
+la información vino de la recuperación.
+
+### Paso a paso (sin clave de API)
+
+[Abrir el laboratorio](https://reeb-dev.github.io/rag-ejemplo/#/laboratorio). Es el mejor
+punto de partida para entender RAG.
+
+1. Lee el resumen de **las etapas de RAG** al principio.
+2. Elige uno de los **seis ejemplos guiados** y lee el recuadro **"Qué observar"**.
+3. Recorre las etapas: cada una explica qué hace, por qué importa y cómo se hace en un RAG
+   real, y debajo muestra lo que pasó con tu pregunta: los fragmentos preparados, los
+   términos de la pregunta, el puntaje de **todos** los fragmentos, las tres partes del
+   prompt y la respuesta.
+4. Mueve el **top-k** o escribe tu propia pregunta y mira qué cambia.
+
+| Ejemplo | Qué enseña |
+| --- | --- |
+| Un dato que solo está en los documentos | RAG le da al modelo información que no podría saber. |
+| Cuando la respuesta no está | Un buen RAG dice "no lo sé" en lugar de inventar. |
+| La respuesta está repartida | Por qué importa elegir bien el top-k. |
+| Mismo significado, otras palabras | Por qué un RAG real usa embeddings y no solo palabras. |
+| Preguntas frecuentes | Documentos bien escritos hacen fácil la búsqueda. |
+| Para esto sirve el modelo de lenguaje | La búsqueda encuentra; el modelo entiende y redacta. |
+
+### Demo
+
+[Abrir la demo](https://reeb-dev.github.io/rag-ejemplo/). Un asistente de atención al
+cliente con RAG.
+
+1. Haz clic en una pregunta de ejemplo o escribe la tuya.
+2. Mira cómo se marcan las etapas **Recuperar → Aumentar → Generar** y los **fragmentos
+   recuperados** debajo, con su puntaje.
+3. Activa **"Comparar con una respuesta sin RAG"** para ver lado a lado la diferencia.
+4. Sin clave, la respuesta se arma copiando frases de los fragmentos. Para que la redacte
+   Claude, crea una clave en [console.anthropic.com](https://console.anthropic.com/)
+   (sección *API Keys*) y pégala en el recuadro de arriba. Se guarda solo en tu navegador
+   y el uso se cobra a tu cuenta.
+
+### Guía
+
+[Abrir la guía](https://reeb-dev.github.io/rag-ejemplo/#/guia). Los 9 capítulos de
+[`docs/`](docs): desde qué es RAG hasta cómo armar el tuyo, cómo sacarle el jugo y
+ejercicios para aprender o enseñar.
 
 ## Cómo ejecutarlo en tu computadora
 

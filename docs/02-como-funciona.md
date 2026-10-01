@@ -1,5 +1,8 @@
 # 2. Cómo funciona RAG, paso a paso
 
+> 🔬 Mientras lees, abre el [laboratorio paso a paso](https://reeb-dev.github.io/rag-ejemplo/#/laboratorio):
+> muestra cada una de estas etapas con una pregunta real, sin clave de API.
+
 Un sistema RAG tiene **dos fases**:
 
 1. **Indexado** (se hace una vez, o cada vez que cambian los documentos).
